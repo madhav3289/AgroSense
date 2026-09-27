@@ -625,7 +625,7 @@ def _as_text(value, default):
 
 
 def analyze_leaf_with_gemini(image_bytes, mime_type):
-    import base64
+    import base64, time as _time
     body = {
         "contents": [{
             "parts": [
@@ -636,18 +636,31 @@ def analyze_leaf_with_gemini(image_bytes, mime_type):
         }],
         "generationConfig": {"responseMimeType": "application/json"},
     }
-    try:
-        # Key goes in a header (not the URL) so it can never end up in logs or exception text.
-        resp = requests.post(
-            GEMINI_ENDPOINT,
-            headers={"Content-Type": "application/json", "x-goog-api-key": env("GEMINI_API_KEY")},
-            json=body,
-            timeout=60,
-        )
-    except requests.RequestException as e:
-        raise AnalysisError(f"Gemini request failed: {type(e).__name__}")
-    if resp.status_code != 200:
-        raise AnalysisError(f"Gemini returned HTTP {resp.status_code}")
+    
+    MAX_ATTEMPTS = 3
+    last_error = None
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            # Key goes in a header (not the URL) so it can never end up in logs or exception text.
+            resp = requests.post(
+                GEMINI_ENDPOINT,
+                headers={"Content-Type": "application/json", "x-goog-api-key": env("GEMINI_API_KEY")},
+                json=body,
+                timeout=60,
+            )
+        except requests.RequestException as e:
+            last_error = AnalysisError(f"Gemini request failed: {type(e).__name__}")
+            if attempt < MAX_ATTEMPTS:
+                _time.sleep(1.5 * attempt)
+                continue
+            raise last_error
+        if resp.status_code == 404 and attempt < MAX_ATTEMPTS:
+            print(f"⚠️ Gemini 404 on attempt {attempt}/{MAX_ATTEMPTS}, retrying...")
+            _time.sleep(1.5 * attempt)
+            continue
+        if resp.status_code != 200:
+            raise AnalysisError(f"Gemini returned HTTP {resp.status_code}")
+        break
     try:
         parts = resp.json()["candidates"][0]["content"]["parts"]
         text = "".join(p.get("text", "") for p in parts)
@@ -664,7 +677,6 @@ def analyze_leaf_with_gemini(image_bytes, mime_type):
         "severity": _as_text(parsed.get("severity"), "Unknown"),
         "solution": _as_text(parsed.get("solution"), "No solution provided."),
     }
-
 
 @app.route("/api/disease-detection", methods=["POST"])
 @jwt_required()
