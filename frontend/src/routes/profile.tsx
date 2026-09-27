@@ -62,6 +62,14 @@ function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Single source of truth for the Plan card: prefer the freshly-fetched profileUser,
+  // fall back to the global auth user (e.g. right after payment, before this page's own
+  // /api/profile call resolves). Using one merged object for every field here (instead of
+  // mixing profileUser/user per-field) avoids reading a field off `profileUser` while it's
+  // still null, and avoids showing stale/zeroed numbers from one source while another
+  // source already reports the updated plan.
+  const planUser = profileUser ?? user ?? null;
+
   useEffect(() => {
     let active = true;
     api
@@ -203,15 +211,17 @@ function ProfilePage() {
           <h2 className="flex items-center gap-2 text-lg font-extrabold text-green-800">
             <AiOutlineThunderbolt /> Plan
           </h2>
-          <ProBadge isPro={profileUser?.is_pro ?? user?.is_pro} />
+          <ProBadge isPro={planUser?.is_pro} />
         </div>
 
-        {(profileUser?.is_pro ?? user?.is_pro) ? (
+        {!planUser ? (
+          <p className="mt-3 text-sm text-green-900/70">Loading plan…</p>
+        ) : planUser.is_pro ? (
           <div className="mt-3">
             <p className="text-sm font-semibold text-green-800">You're on Pro 🎉</p>
-            {formatDate(profileUser.pro_expires_at) ? (
+            {formatDate(planUser.pro_expires_at) ? (
               <p className="mt-1 text-sm text-green-900/80">
-                Renews on {formatDate(profileUser.pro_expires_at)}
+                Renews on {formatDate(planUser.pro_expires_at)}
               </p>
             ) : null}
           </div>
@@ -220,12 +230,12 @@ function ProfilePage() {
             <p className="text-sm text-green-900">
               Free disease scans used:{" "}
               <span className="font-bold text-green-800">
-                {Math.min(profileUser?.disease_detection_uses ?? 0, FREE_SCAN_LIMIT)} /{" "}
+                {Math.min(planUser.disease_detection_uses ?? 0, FREE_SCAN_LIMIT)} /{" "}
                 {FREE_SCAN_LIMIT}
               </span>
             </p>
             <p className="mt-1 text-sm text-green-900/80">
-              Remaining: {Math.max(FREE_SCAN_LIMIT - (profileUser?.disease_detection_uses ?? 0), 0)}
+              Remaining: {Math.max(FREE_SCAN_LIMIT - (planUser.disease_detection_uses ?? 0), 0)}
             </p>
             <button
               onClick={() => setUpgradeOpen(true)}
