@@ -524,6 +524,7 @@ def user_profile():
                 "phone": user.get("phone", ""),
                 "location": user.get("location", ""),
                 "about": user.get("about", ""),
+                **plan_fields(user),
             }
             return jsonify({"user": prof}), 200
 
@@ -585,6 +586,7 @@ def user_profile():
             "phone": updated.get("phone", ""),
             "location": updated.get("location", ""),
             "about": updated.get("about", ""),
+            **plan_fields(updated),
         }
         return jsonify({"message": "Profile updated", "user": prof}), 200
     except Exception as e:
@@ -636,7 +638,7 @@ def analyze_leaf_with_gemini(image_bytes, mime_type):
         }],
         "generationConfig": {"responseMimeType": "application/json"},
     }
-    
+
     MAX_ATTEMPTS = 3
     last_error = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
