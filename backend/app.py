@@ -87,7 +87,7 @@ FREE_DISEASE_SCANS = 3          # free disease-detection scans before the paywal
 PRO_PRICE_PAISE = 9900          # ₹99 in paise (placeholder plan)
 PRO_CURRENCY = "INR"
 PRO_DURATION_DAYS = 30
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash-lite"
 GEMINI_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 # ===============================
