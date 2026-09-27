@@ -1,0 +1,21 @@
+node_modules
+.output
+.vercel
+.wrangler
+dist
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment files — never commit real values
+.env
+.dev-server/.env
+!.env.example
