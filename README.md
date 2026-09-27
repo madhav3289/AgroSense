@@ -1,7 +1,8 @@
 ## AgroSense – Smart Agriculture Platform
 
 AgroSense is a full‑stack web application that helps farmers make better decisions with **AI‑powered crop recommendations**, **soil restoration guidance** and **leaf disease detection**, wrapped in a secure, modern web experience.
-The project is split into a **Flask API backend** with MongoDB and ML models, and a **frontend** built separately in Lovable against the API contract below.
+
+This repository contains the **Flask API backend** with MongoDB and ML models.
 
 ---
 
@@ -9,20 +10,15 @@ The project is split into a **Flask API backend** with MongoDB and ML models, an
 
 ```text
 AgroSense/
-├─ backend/                # Flask API + ML models — the real backend, deploy this
+├─ backend/                # Flask API + ML models
 │  ├─ app.py               # Main API entrypoint
 │  ├─ *.pkl                # Trained model & scalers
 │  ├─ *.csv                # Datasets / reference data
 │  └─ requirements.txt     # Backend dependencies
-├─ frontend-reference/     # Original React (Vite + Tailwind) frontend — kept for reference only, not deployed
-├─ API_CONTRACT.md         # Full endpoint reference — hand this to Lovable so the new frontend matches the backend exactly
-├─ LOVABLE_PROMPT.md       # Ready-to-paste prompt for building the new frontend in Lovable
 └─ README.md               # Root project documentation
 ```
 
-`frontend/` doesn't exist as a local folder — Lovable projects live on Lovable's platform. Once you paste the prompt in `LOVABLE_PROMPT.md` into a new Lovable project, that becomes your frontend; `frontend-reference/` is only there so you (or Claude) can look up how a screen or flow worked before, it isn't wired up to anything.
-
-For backend detail, see `backend/README.md`. The old frontend's own README is at `frontend-reference/README.md`, describing how to run that copy locally if you ever want to.
+For backend detail, see `backend/README.md`.
 
 ---
 
@@ -30,7 +26,7 @@ For backend detail, see `backend/README.md`. The old frontend's own README is at
 
 - **User authentication**
   - JWT‑based login and registration (rate limited to 10 requests/minute per IP)
-  - Protected routes in the frontend using auth context
+  - Protected routes using auth context
   - Profile fetching and secure logout
 - **AI crop recommendation**
   - Uses trained ML model (`model.pkl`) with preprocessing scalers
@@ -59,9 +55,8 @@ For backend detail, see `backend/README.md`. The old frontend's own README is at
 
 ## Prerequisites
 
-- **Python**: 3.10+ (for the backend)
+- **Python**: 3.10+
 - **MongoDB**: running locally or accessible via connection string
-- A **Lovable** account, for building/hosting the new frontend (no local Node setup needed on your machine for that part)
 
 ---
 
@@ -103,7 +98,7 @@ A ready-to-copy template with comments is in `backend/.env.example`.
 | `SECRET_KEY`, `JWT_SECRET_KEY` | yes | Flask / JWT signing secrets — always set your own in production |
 | `MONGO_URI`, `MONGO_DB_NAME` | yes | MongoDB connection (local or Atlas) |
 | `GEMINI_API_KEY` | for disease detection | Used server-side only; the key never reaches the browser |
-| `FRONTEND_URL` | yes in production | Allowed CORS origin(s); comma-separate to allow several — this must include your Lovable app's published URL |
+| `FRONTEND_URL` | yes in production | Allowed CORS origin(s); comma-separate to allow several |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | optional | Enables Pro upgrades and the free-scan limit. **Blank = payments off and disease detection is unlimited for everyone** |
 | `DATA_GOV_IN_API_KEY` | optional | Enables live mandi prices. Blank = `/api/mandi-price` returns "Price data unavailable" |
 
@@ -114,18 +109,6 @@ python app.py
 ```
 
 The API will be available at `http://localhost:5000`.
-
----
-
-## Frontend (Lovable) – Setup
-
-1. Open `LOVABLE_PROMPT.md` in this repo, copy the whole thing, and paste it as the first message in a new Lovable project.
-2. Once Lovable finishes the first build, set the backend URL it should call — see the "Connecting to the backend" section of `LOVABLE_PROMPT.md` for exactly where that goes.
-3. Set `FRONTEND_URL` on the backend to your Lovable app's preview/published URL, so CORS allows it.
-
-`API_CONTRACT.md` is the source of truth for every request/response shape; `LOVABLE_PROMPT.md` already embeds the parts Lovable needs, but keep `API_CONTRACT.md` handy if you ask Lovable to add anything later.
-
-If you'd rather run the **original** React frontend instead of (or while) building the Lovable one, see `frontend-reference/README.md` — it still works standalone against this same backend.
 
 ---
 
@@ -156,7 +139,7 @@ If you'd rather run the **original** React frontend instead of (or while) buildi
   - `GET /api/profile` – user profile (username, email, phone, location, about)
   - `PUT /api/profile` – update profile fields
 
-See `API_CONTRACT.md` for full request/response shapes, headers, and error cases, or `backend/app.py` for the implementation itself.
+See `backend/app.py` for the full implementation.
 
 ---
 
@@ -164,7 +147,7 @@ See `API_CONTRACT.md` for full request/response shapes, headers, and error cases
 
 - Environment‑specific secrets (`SECRET_KEY`, `JWT_SECRET_KEY`, `MONGO_URI`, `GEMINI_API_KEY`, Razorpay and data.gov.in keys) are **not** committed; use a local `.env` file (see `backend/.env.example`).
 - Large or generated assets (`node_modules`, virtualenvs) are ignored via `.gitignore`.
-- Deploying: the backend runs with `gunicorn app:app` from the `backend/` directory (e.g. Render or Railway), with `MONGO_URI` pointing at MongoDB Atlas and `FRONTEND_URL` set to your Lovable app's URL. The rate limiter is in-memory, so keep a single gunicorn worker (the default) for the 10/minute limit to be exact.
+- Deploying: the backend runs with `gunicorn app:app` from the `backend/` directory (e.g. Render or Railway), with `MONGO_URI` pointing at MongoDB Atlas and `FRONTEND_URL` set to your frontend's deployed URL. The rate limiter is in-memory, so keep a single gunicorn worker (the default) for the 10/minute limit to be exact.
 - When changing model files (`model.pkl`, scalers, CSVs), restart the Flask server so they are reloaded.
 
 ---
