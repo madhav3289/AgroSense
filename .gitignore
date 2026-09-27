@@ -40,3 +40,5 @@ backend/uploads/
 # Docs not meant for GitHub
 API_CONTRACT.md
 LOVABLE_PROMPT.md
+
+frontend-reference/
